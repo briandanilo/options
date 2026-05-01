@@ -5,7 +5,7 @@ const router = Router()
 router.get('/:ticker', async (req, res) => {
   const ticker = req.params.ticker.toUpperCase()
   try {
-    const token = process.env.FINNHUB_KEY
+    const token = process.env.FINNHUB_KEY || 'd7qjb01r01qudmimhgu0d7qjb01r01qudmimhgug'
     const [quoteRes, profileRes] = await Promise.all([
       fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${token}`),
       fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${token}`),
