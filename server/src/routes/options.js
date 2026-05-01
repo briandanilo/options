@@ -1,25 +1,19 @@
 import { Router } from 'express'
+import YahooFinance from 'yahoo-finance2'
 
+const yf = new YahooFinance({ suppressNotices: ['yahooSurvey', 'ripHistorical'] })
 const router = Router()
 
 router.get('/:ticker', async (req, res) => {
   const ticker = req.params.ticker.toUpperCase()
   try {
-    const token = process.env.FINNHUB_KEY || 'd7qjb01r01qudmimhgu0d7qjb01r01qudmimhgug'
     const { expiration } = req.query
+    const opts = expiration ? { date: new Date(expiration) } : {}
+    const result = await yf.options(ticker, opts)
 
-    const url = expiration
-      ? `https://finnhub.io/api/v1/stock/option-chain?symbol=${ticker}&expiration=${expiration}&token=${token}`
-      : `https://finnhub.io/api/v1/stock/option-chain?symbol=${ticker}&token=${token}`
-
-    const result = await fetch(url).then(r => r.json())
-    if (!result.data?.length) throw new Error('No options data')
-
-    const expirationDates = [...new Set(result.data.map(d => d.expirationDate))].sort()
-
-    const target = expiration
-      ? result.data.find(d => d.expirationDate === expiration)
-      : result.data[0]
+    const expirationDates = (result.expirationDates || []).map(d =>
+      new Date(d).toISOString().split('T')[0]
+    )
 
     const mapOption = o => ({
       strike:            o.strike,
@@ -28,14 +22,14 @@ router.get('/:ticker', async (req, res) => {
       ask:               o.ask,
       impliedVolatility: o.impliedVolatility,
       inTheMoney:        o.inTheMoney,
-      volume:            o.volume    ?? 0,
-      openInterest:      o.openInterest ?? 0,
+      volume:            o.volume        ?? 0,
+      openInterest:      o.openInterest  ?? 0,
     })
 
     res.json({
       expirationDates,
-      calls: (target?.options?.CALL || []).map(mapOption),
-      puts:  (target?.options?.PUT  || []).map(mapOption),
+      calls: (result.options?.[0]?.calls || []).map(mapOption),
+      puts:  (result.options?.[0]?.puts  || []).map(mapOption),
     })
   } catch (err) {
     console.error(`[options] ${ticker}:`, err.message)
