@@ -119,6 +119,8 @@
   flex-wrap: wrap;
 }
 .loading-badge { color: #64748b; font-size: 0.8rem; margin-left: 0.25rem; }
+.loading-row   { color: #64748b; font-size: 0.85rem; text-align: center; padding: 0.5rem; }
+.options-error { background: #3b0f0f; border: 1px solid #7f1d1d; color: #fca5a5; border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.85rem; }
 
 /* ── summary row ── */
 .summary-row {

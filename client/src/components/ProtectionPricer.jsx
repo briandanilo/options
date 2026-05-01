@@ -52,6 +52,7 @@ export default function ProtectionPricer({ stock }) {
   const [calls, setCalls] = useState([])
   const [puts, setPuts] = useState([])
   const [loading, setLoading] = useState(false)
+  const [optionsError, setOptionsError] = useState(null)
   const [values, setValues] = useState([-5, 10])
   const lastCommitted  = useRef([-5, 10])
   const draggingThumb  = useRef(null)
@@ -73,9 +74,11 @@ export default function ProtectionPricer({ stock }) {
   useEffect(() => {
     async function load() {
       setLoading(true)
+      setOptionsError(null)
       try {
         const res = await fetch(`/api/options/${stock.ticker}`)
         const data = await res.json()
+        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
         const dates = data.expirationDates || []
         setAllExpirations(dates)
         const picked = pickExpirations(dates)
@@ -86,9 +89,13 @@ export default function ProtectionPricer({ stock }) {
         if (defaultExp) {
           const r2 = await fetch(`/api/options/${stock.ticker}?expiration=${defaultExp}`)
           const d2 = await r2.json()
+          if (!r2.ok) throw new Error(d2.error || `HTTP ${r2.status}`)
           setCalls(d2.calls || [])
           setPuts(d2.puts || [])
         }
+      } catch (err) {
+        console.error('[options load]', err)
+        setOptionsError(err.message)
       } finally {
         setLoading(false)
       }
@@ -100,11 +107,16 @@ export default function ProtectionPricer({ stock }) {
     if (!expiration || !allExpirations.length) return
     async function loadChain() {
       setLoading(true)
+      setOptionsError(null)
       try {
         const res = await fetch(`/api/options/${stock.ticker}?expiration=${expiration}`)
         const data = await res.json()
+        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
         setCalls(data.calls || [])
         setPuts(data.puts || [])
+      } catch (err) {
+        console.error('[options chain]', err)
+        setOptionsError(err.message)
       } finally {
         setLoading(false)
       }
@@ -266,6 +278,9 @@ export default function ProtectionPricer({ stock }) {
           <span>+{MAX_PCT}%</span>
         </div>
       </div>
+
+      {loading && <div className="loading-row">Loading options chain…</div>}
+      {optionsError && <div className="options-error">⚠ Options error: {optionsError}</div>}
 
       <div className="summary-row">
         <SummaryCard label="Put cost"      value={putBps}  mid={putMid}  color="red"   />
