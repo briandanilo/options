@@ -14,8 +14,8 @@ router.get('/:ticker', async (req, res) => {
   const ticker = req.params.ticker.toUpperCase()
   const { expiration } = req.query
   const url = expiration
-    ? `https://query1.finance.yahoo.com/v7/finance/options/${ticker}?date=${Math.floor(new Date(expiration).getTime() / 1000)}`
-    : `https://query1.finance.yahoo.com/v7/finance/options/${ticker}`
+    ? `https://yf-proxy.brian-danilo.workers.dev/v7/finance/options/${ticker}?date=${Math.floor(new Date(expiration).getTime() / 1000)}`
+    : `https://yf-proxy.brian-danilo.workers.dev/v7/finance/options/${ticker}`
 
   console.log(`[options] fetching: ${url}`)
 
