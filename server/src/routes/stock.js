@@ -16,6 +16,7 @@ router.get('/:ticker', async (req, res) => {
       changePercent: quote.regularMarketChangePercent,
     })
   } catch (err) {
+    console.error(`[stock] ${req.params.ticker}:`, err.message)
     res.status(404).json({ error: `Could not find ticker: ${req.params.ticker}` })
   }
 })

@@ -32,6 +32,7 @@ router.get('/:ticker', async (req, res) => {
 
     res.json({ expirationDates, calls, puts })
   } catch (err) {
+    console.error(`[options] ${req.params.ticker}:`, err.message)
     res.status(404).json({ error: `Could not fetch options for: ${req.params.ticker}` })
   }
 })
