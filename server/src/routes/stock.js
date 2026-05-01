@@ -13,6 +13,9 @@ router.get('/:ticker', async (req, res) => {
     const quote   = await quoteRes.json()
     const profile = await profileRes.json()
 
+    console.log(`[stock] ${ticker} quote:`, JSON.stringify(quote))
+    console.log(`[stock] ${ticker} profile:`, JSON.stringify(profile))
+
     if (!quote.c) throw new Error('No data')
 
     res.json({

@@ -9,7 +9,14 @@ router.get('/:ticker', async (req, res) => {
   try {
     const { expiration } = req.query
     const opts = expiration ? { date: new Date(expiration) } : {}
-    const result = await yf.options(ticker, opts)
+    let result
+    try {
+      result = await yf.options(ticker, opts)
+      console.log(`[options] ${ticker} expirations:`, result.expirationDates?.length, 'calls:', result.options?.[0]?.calls?.length, 'puts:', result.options?.[0]?.puts?.length)
+    } catch (fetchErr) {
+      console.error(`[options] ${ticker} raw error:`, fetchErr.message, fetchErr.cause?.message || '', fetchErr.stack?.split('\n')[1] || '')
+      throw fetchErr
+    }
 
     const expirationDates = (result.expirationDates || []).map(d =>
       new Date(d).toISOString().split('T')[0]
