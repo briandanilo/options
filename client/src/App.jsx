@@ -16,6 +16,9 @@ export default function App() {
         <StockSearch onSelect={setStock} />
         {stock && <ProtectionPricer stock={stock} />}
       </main>
+      <footer className="footer">
+        {__VERSION__} — built {new Date(__BUILD_TIME__).toLocaleString()}
+      </footer>
     </div>
   )
 }
