@@ -1,23 +1,30 @@
 import { Router } from 'express'
-import YahooFinance from 'yahoo-finance2'
 
-const yf = new YahooFinance({ suppressNotices: ['yahooSurvey', 'ripHistorical'] })
 const router = Router()
 
 router.get('/:ticker', async (req, res) => {
+  const ticker = req.params.ticker.toUpperCase()
   try {
-    const { ticker } = req.params
-    const quote = await yf.quote(ticker.toUpperCase())
+    const token = process.env.FINNHUB_KEY
+    const [quoteRes, profileRes] = await Promise.all([
+      fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${token}`),
+      fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${token}`),
+    ])
+    const quote   = await quoteRes.json()
+    const profile = await profileRes.json()
+
+    if (!quote.c) throw new Error('No data')
+
     res.json({
-      ticker: quote.symbol,
-      price: quote.regularMarketPrice,
-      name: quote.longName || quote.shortName,
-      change: quote.regularMarketChange,
-      changePercent: quote.regularMarketChangePercent,
+      ticker,
+      price:         quote.c,
+      name:          profile.name || ticker,
+      change:        quote.d,
+      changePercent: quote.dp,
     })
   } catch (err) {
-    console.error(`[stock] ${req.params.ticker}:`, err.message)
-    res.status(404).json({ error: `Could not find ticker: ${req.params.ticker}` })
+    console.error(`[stock] ${ticker}:`, err.message)
+    res.status(404).json({ error: `Could not find ticker: ${ticker}` })
   }
 })
 
