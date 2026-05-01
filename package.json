@@ -5,7 +5,8 @@
   "workspaces": ["client", "server"],
   "scripts": {
     "dev": "concurrently \"npm run dev --workspace=server\" \"npm run dev --workspace=client\"",
-    "build": "npm run build --workspace=client",
+    "test": "node server/test/spot-check.js",
+    "build": "npm run test && npm run build --workspace=client",
     "start": "NODE_ENV=production npm run start --workspace=server"
   },
   "devDependencies": {
