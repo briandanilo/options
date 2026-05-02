@@ -142,32 +142,65 @@ export default function ProtectionPricer({ stock }) {
     [activeCalls, callTarget, upsidePct]
   )
 
+  function putsByPct() {
+    return activePuts
+      .map(p => ({ pct: (stock.price - p.strike) / stock.price * 100 }))
+      .sort((a, b) => a.pct - b.pct)
+  }
+  function callsByPct() {
+    return activeCalls
+      .map(c => ({ pct: (c.strike - stock.price) / stock.price * 100 }))
+      .sort((a, b) => a.pct - b.pct)
+  }
+  function nearestIdx(arr, pct) {
+    return arr.reduce((best, _, i) =>
+      Math.abs(arr[i].pct - pct) < Math.abs(arr[best].pct - pct) ? i : best, 0)
+  }
+  function stepPut(byPct, currentPct, goingMoreOTM) {
+    if (byPct.length === 0) return 0
+    if (currentPct < 0.01) return goingMoreOTM ? -byPct[0].pct : 0
+    const idx = nearestIdx(byPct, currentPct)
+    if (goingMoreOTM) return -byPct[Math.min(idx + 1, byPct.length - 1)].pct
+    return idx > 0 ? -byPct[idx - 1].pct : 0
+  }
+  function stepCall(byPct, currentPct, goingMoreOTM) {
+    if (byPct.length === 0) return 0
+    if (currentPct < 0.01) return goingMoreOTM ? byPct[0].pct : 0
+    const idx = nearestIdx(byPct, currentPct)
+    if (goingMoreOTM) return byPct[Math.min(idx + 1, byPct.length - 1)].pct
+    return idx > 0 ? byPct[idx - 1].pct : 0
+  }
+
   function snapToStrikes(vals) {
     const thumb = draggingThumb.current
+    draggingThumb.current = null  // reset so next track click starts fresh
     const [prevDown, prevUp] = lastCommitted.current
     let snappedDown = prevDown
     let snappedUp   = prevUp
 
-    if (thumb === 0 && Math.abs(vals[0]) > 0 && activePuts.length) {
+    if (thumb === null) {
+      // Track click — step one strike in the direction clicked
+      const putDelta  = Math.abs(vals[0]) - Math.abs(prevDown)
+      const callDelta = vals[1] - prevUp
+      if (Math.abs(putDelta) > Math.abs(callDelta)) {
+        snappedDown = stepPut(putsByPct(), Math.abs(prevDown), putDelta > 0)
+      } else if (Math.abs(callDelta) > 0.01) {
+        snappedUp = stepCall(callsByPct(), prevUp, callDelta > 0)
+      }
+    } else if (thumb === 0 && Math.abs(vals[0]) > 0 && activePuts.length) {
       const reqPct = Math.abs(vals[0])
       const goingMoreOTM = reqPct > Math.abs(prevDown)
-      const byPct = activePuts
-        .map(p => ({ pct: (stock.price - p.strike) / stock.price * 100 }))
-        .sort((a, b) => a.pct - b.pct)
+      const byPct = putsByPct()
       const snap = goingMoreOTM
         ? byPct.find(x => x.pct >= reqPct) ?? byPct[byPct.length - 1]
         : [...byPct].reverse().find(x => x.pct <= reqPct) ?? byPct[0]
       if (snap) snappedDown = -snap.pct
     } else if (thumb === 0) {
       snappedDown = 0
-    }
-
-    if (thumb === 1 && vals[1] > 0 && activeCalls.length) {
+    } else if (thumb === 1 && vals[1] > 0 && activeCalls.length) {
       const reqPct = vals[1]
       const goingMoreOTM = reqPct > prevUp
-      const byPct = activeCalls
-        .map(c => ({ pct: (c.strike - stock.price) / stock.price * 100 }))
-        .sort((a, b) => a.pct - b.pct)
+      const byPct = callsByPct()
       const snap = goingMoreOTM
         ? byPct.find(x => x.pct >= reqPct) ?? byPct[byPct.length - 1]
         : [...byPct].reverse().find(x => x.pct <= reqPct) ?? byPct[0]
