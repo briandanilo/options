@@ -9,8 +9,8 @@ export default function App() {
   return (
     <div className="app">
       <header className="header">
-        <h1 className="logo">options</h1>
-        <p className="tagline">real time pricing</p>
+        <h1 className="logo">collar calculator</h1>
+        <p className="tagline">real time options prices</p>
       </header>
       <main className="main">
         <StockSearch onSelect={setStock} />
