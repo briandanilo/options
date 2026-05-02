@@ -130,10 +130,6 @@ export default function ProtectionPricer({ stock }) {
   const putTarget  = stock.price * (1 - downsidePct / 100)
   const callTarget = stock.price * (1 + upsidePct   / 100)
 
-  // Always show the actual strike's percentage, not the raw slider value
-  const displayDownPct = selectedPut  ? (stock.price - selectedPut.strike)  / stock.price * 100 : downsidePct
-  const displayUpPct   = selectedCall ? (selectedCall.strike - stock.price) / stock.price * 100 : upsidePct
-
   const activePuts  = useMemo(() => puts.filter(p  => p.bid > 0 && p.ask > 0 && p.strike  <= stock.price), [puts,  stock.price])
   const activeCalls = useMemo(() => calls.filter(c => c.bid > 0 && c.ask > 0 && c.strike >= stock.price), [calls, stock.price])
 
@@ -232,7 +228,7 @@ export default function ProtectionPricer({ stock }) {
         <div className="slider-labels">
           <div className="side-label left">
             <span className="side-name">Put protection</span>
-            <span className="side-pct put-pct">{displayDownPct.toFixed(1)}% below</span>
+            <span className="side-pct put-pct">{downsidePct.toFixed(1)}% below</span>
             <span className="side-strike">
               {selectedPut ? `strike $${selectedPut.strike.toFixed(2)}` : '—'}
             </span>
@@ -245,7 +241,7 @@ export default function ProtectionPricer({ stock }) {
           </div>
           <div className="side-label right">
             <span className="side-name">Call sold</span>
-            <span className="side-pct call-pct">{displayUpPct.toFixed(1)}% above</span>
+            <span className="side-pct call-pct">{upsidePct.toFixed(1)}% above</span>
             <span className="side-strike">
               {selectedCall ? `strike $${selectedCall.strike.toFixed(2)}` : '—'}
             </span>
