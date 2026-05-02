@@ -342,35 +342,20 @@ export default function ProtectionPricer({ stock }) {
   )
 }
 
-function spreadGrade(spreadPct) {
-  if (spreadPct <  3) return { label: 'Tight',    color: '#4ade80', score: 4 }
-  if (spreadPct < 10) return { label: 'Fair',     color: '#facc15', score: 3 }
-  if (spreadPct < 25) return { label: 'Wide',     color: '#fb923c', score: 2 }
-  return                     { label: 'Very wide', color: '#f87171', score: 1 }
-}
-
-function volumeGrade(volume, oi) {
-  if (volume > 100 || oi > 500) return { label: 'Active',   color: '#4ade80' }
-  if (volume > 10  || oi > 100) return { label: 'Light',    color: '#facc15' }
-  if (volume > 0   || oi > 0)   return { label: 'Thin',     color: '#fb923c' }
-  return                                { label: 'No volume', color: '#f87171' }
-}
-
 function LiquidityPanel({ put, call }) {
-  function metrics(o, side) {
+  function row(o, side) {
     if (!o) return null
+    const spread = o.ask - o.bid
     const mid = (o.bid + o.ask) / 2
-    const spreadPct = mid > 0 ? ((o.ask - o.bid) / mid) * 100 : 999
-    const sg = spreadGrade(spreadPct)
-    const vg = volumeGrade(o.volume, o.openInterest)
-    return { side, strike: o.strike, spreadPct, sg, vg, volume: o.volume, oi: o.openInterest }
+    const spreadPct = mid > 0 ? (spread / mid) * 100 : 0
+    return { side, strike: o.strike, bid: o.bid, ask: o.ask, spread, spreadPct }
   }
 
-  const rows = [metrics(put, 'Put'), metrics(call, 'Call')].filter(Boolean)
+  const rows = [row(put, 'Put'), row(call, 'Call')].filter(Boolean)
 
   return (
     <div className="liquidity-panel">
-      <div className="liq-title">Market liquidity</div>
+      <div className="liq-title">Bid / Ask</div>
       <div className="liq-grid">
         {rows.map(r => (
           <div key={r.side} className="liq-card">
@@ -380,26 +365,18 @@ function LiquidityPanel({ put, call }) {
             </div>
             <div className="liq-metrics">
               <div className="liq-metric">
+                <span className="liq-metric-label">Bid</span>
+                <span className="liq-metric-value">${r.bid.toFixed(2)}</span>
+              </div>
+              <div className="liq-metric">
+                <span className="liq-metric-label">Ask</span>
+                <span className="liq-metric-value">${r.ask.toFixed(2)}</span>
+              </div>
+              <div className="liq-metric">
                 <span className="liq-metric-label">Spread</span>
-                <span className="liq-metric-value" style={{ color: r.sg.color }}>
-                  {r.spreadPct.toFixed(1)}%
-                </span>
-                <span className="liq-badge" style={{ color: r.sg.color }}>{r.sg.label}</span>
+                <span className="liq-metric-value">${r.spread.toFixed(2)}</span>
+                <span className="liq-badge" style={{ color: '#94a3b8' }}>{r.spreadPct.toFixed(1)}%</span>
               </div>
-              <div className="liq-metric">
-                <span className="liq-metric-label">Volume</span>
-                <span className="liq-metric-value" style={{ color: r.vg.color }}>
-                  {r.volume.toLocaleString()}
-                </span>
-                <span className="liq-badge" style={{ color: r.vg.color }}>{r.vg.label}</span>
-              </div>
-              <div className="liq-metric">
-                <span className="liq-metric-label">Open interest</span>
-                <span className="liq-metric-value">{r.oi.toLocaleString()}</span>
-              </div>
-            </div>
-            <div className="liq-bar-track">
-              <div className="liq-bar-fill" style={{ width: `${Math.max(5, Math.min(100, (r.sg.score / 4) * 100))}%`, background: r.sg.color }} />
             </div>
           </div>
         ))}
