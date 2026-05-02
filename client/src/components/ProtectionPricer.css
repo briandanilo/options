@@ -360,7 +360,8 @@
   .net-card { min-width: unset; padding: 0.9rem 0.75rem; }
   .net-value { font-size: 1.75rem; }
 
-  /* Slider */
+  /* Slider — hide center price on mobile, already shown in banner */
+  .center-price { display: none; }
   .slider-card { padding: 1.25rem; }
   .side-pct { font-size: 1.1rem; }
 }
